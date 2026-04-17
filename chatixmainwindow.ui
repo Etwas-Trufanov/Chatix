@@ -14,7 +14,7 @@
    <string>ChatixMainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QListWidget" name="listWidget">
+   <widget class="QListWidget" name="chatList">
     <property name="geometry">
      <rect>
       <x>10</x>
@@ -24,20 +24,20 @@
      </rect>
     </property>
    </widget>
-   <widget class="QTextEdit" name="textEdit">
+   <widget class="QTextEdit" name="chatBox">
     <property name="geometry">
      <rect>
       <x>160</x>
-      <y>10</y>
+      <y>40</y>
       <width>431</width>
-      <height>271</height>
+      <height>241</height>
      </rect>
     </property>
     <property name="readOnly">
      <bool>true</bool>
     </property>
    </widget>
-   <widget class="QPlainTextEdit" name="plainTextEdit">
+   <widget class="QPlainTextEdit" name="questionEdit">
     <property name="geometry">
      <rect>
       <x>160</x>
@@ -50,7 +50,7 @@
      <string>Your question...</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="pushButton">
+   <widget class="QPushButton" name="sendButton">
     <property name="geometry">
      <rect>
       <x>550</x>
@@ -63,11 +63,11 @@
      <string>🛸</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="pushButton_2">
+   <widget class="QPushButton" name="hideChatListButton">
     <property name="geometry">
      <rect>
-      <x>170</x>
-      <y>20</y>
+      <x>160</x>
+      <y>10</y>
       <width>21</width>
       <height>21</height>
      </rect>
@@ -79,9 +79,9 @@
    <widget class="QWidget" name="horizontalLayoutWidget">
     <property name="geometry">
      <rect>
-      <x>199</x>
-      <y>19</y>
-      <width>381</width>
+      <x>190</x>
+      <y>10</y>
+      <width>401</width>
       <height>22</height>
      </rect>
     </property>
