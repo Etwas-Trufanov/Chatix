@@ -52,7 +52,7 @@ namespace lmc {
                 curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
 
                 curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
-                curl_easy_setopt(curl, CURLOPT_TIMEOUT, 30L);
+                curl_easy_setopt(curl, CURLOPT_TIMEOUT, 60L);
                 curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 10L);
                 curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
                 curl_easy_setopt(curl, CURLOPT_STDERR, stderr);

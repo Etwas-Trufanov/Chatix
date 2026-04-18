@@ -60,7 +60,10 @@
      </rect>
     </property>
     <property name="text">
-     <string>🛸</string>
+     <string/>
+    </property>
+    <property name="icon">
+     <iconset theme="QIcon::ThemeIcon::MailForward"/>
     </property>
    </widget>
    <widget class="QPushButton" name="hideChatListButton">
@@ -73,15 +76,18 @@
      </rect>
     </property>
     <property name="text">
-     <string>&lt;</string>
+     <string/>
+    </property>
+    <property name="icon">
+     <iconset theme="QIcon::ThemeIcon::GoPrevious"/>
     </property>
    </widget>
    <widget class="QWidget" name="horizontalLayoutWidget">
     <property name="geometry">
      <rect>
-      <x>190</x>
+      <x>220</x>
       <y>10</y>
-      <width>401</width>
+      <width>371</width>
       <height>22</height>
      </rect>
     </property>
@@ -120,6 +126,22 @@
       </spacer>
      </item>
     </layout>
+   </widget>
+   <widget class="QPushButton" name="newChatButton">
+    <property name="geometry">
+     <rect>
+      <x>190</x>
+      <y>10</y>
+      <width>21</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="icon">
+     <iconset theme="QIcon::ThemeIcon::ContactNew"/>
+    </property>
    </widget>
   </widget>
  </widget>

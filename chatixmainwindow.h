@@ -2,6 +2,7 @@
 #define CHATIXMAINWINDOW_H
 #include "llmconnector.hpp"
 #include <QMainWindow>
+#include <vector>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -22,7 +23,20 @@ private slots:
     void on_sendButton_clicked();
 
 private:
+
     Ui::ChatixMainWindow *ui;
+
+    const nlohmann::json startMessage = nlohmann::json::parse(R"({
+"messages": [
+  {"role": "system", "content": "Ты полезный ассистент."}
+],
+"temperature": 0.7,
+"max_tokens": -1
+})");
+
+    std::vector<nlohmann::json> chats;
+
+    std::size_t curChatID = 0;
 
     std::unique_ptr<lmc::llm> model;
 

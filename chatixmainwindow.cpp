@@ -10,6 +10,7 @@ ChatixMainWindow::ChatixMainWindow(QWidget *parent)
     , model(std::make_unique<lmc::remote_llm>("http://localhost:1234/v1/chat/completions"))
 {
     ui->setupUi(this);
+    chats.push_back(startMessage);
 }
 
 ChatixMainWindow::~ChatixMainWindow()
@@ -23,17 +24,25 @@ std::string ChatixMainWindow::genHTML() {
 
 void ChatixMainWindow::on_sendButton_clicked()
 {
-    nlohmann::json q = nlohmann::json::parse(R"({
-    "messages": [
-      {"role": "system", "content": "Ты полезный ассистент."},
-      {"role": "user", "content": "Привет! Как дела?"}
-    ],
-    "temperature": 0.7,
-    "max_tokens": -1
-})");
     try {
-        nlohmann::json r = model->call_answer(q);
-        ui->chatBox->setText(QString::fromStdString(r.dump(2)));
+        // Добавляем вопрос пользователя в контекст
+        chats[curChatID]["messages"].push_back({
+            {"role", "user"},
+            {"content", ui->questionEdit->toPlainText().toStdString()}
+        });
+        // Выводим его в чат
+        ui->chatBox->append(ui->questionEdit->toPlainText());
+        // Получаем ответ от сервера
+        nlohmann::json response = model->call_answer(chats[curChatID]);
+        if (!response.is_null()) {
+            std::string llmContent = response["choices"][0]["message"]["content"];
+            chats[curChatID]["messages"].push_back({
+                {"role", "assistant"},
+                {"content", llmContent}
+            });
+        }
+        // chats[0]["messages"];
+        ui->chatBox->append(QString::fromStdString(response["choices"][0]["message"]["content"]));
     } catch (std::runtime_error &e) {
         std::cout << e.what() << std::endl;
     }
