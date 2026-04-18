@@ -41,23 +41,30 @@ namespace lmc {
             nlohmann::json call_answer(nlohmann::json &context) override {
                 readBuffer.clear();
                 std::string json_str = context.dump();
-                struct curl_slist* headers = NULL;
+
+                struct curl_slist* headers = nullptr;
                 headers = curl_slist_append(headers, "Content-Type: application/json");
+
                 curl_easy_setopt(curl, CURLOPT_URL, server_url.c_str());
                 curl_easy_setopt(curl, CURLOPT_POSTFIELDS, json_str.c_str());
                 curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
                 curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
                 curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
+
+                curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
                 curl_easy_setopt(curl, CURLOPT_TIMEOUT, 30L);
                 curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 10L);
+                curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
+                curl_easy_setopt(curl, CURLOPT_STDERR, stderr);
+                curl_easy_setopt(curl, CURLOPT_PROXY, "");
+
+                CURLcode res = curl_easy_perform(curl);
                 curl_slist_free_all(headers);
 
-                // Отправка запроса
-                res = curl_easy_perform(curl);
-                if(res != CURLE_OK) {
-                    throw std::runtime_error(curl_easy_strerror(res));
+                if (res != CURLE_OK) {
+                    throw std::runtime_error(std::string("CURL Error: ") + curl_easy_strerror(res));
                 }
-                curl_slist_free_all(headers);
+
                 return nlohmann::json::parse(readBuffer);
             }
             ~remote_llm() override {
