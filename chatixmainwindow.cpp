@@ -3,6 +3,7 @@
 #include "llmconnector.hpp"
 #include <QtQuickWidgets/QQuickWidget>
 #include <iostream>
+#include <QResizeEvent>
 
 ChatixMainWindow::ChatixMainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -18,8 +19,14 @@ ChatixMainWindow::~ChatixMainWindow()
     delete ui;
 }
 
-std::string ChatixMainWindow::genHTML() {
-    return "";
+QString ChatixMainWindow::genMD() {
+    QString chatString;
+    for (std::size_t i = 1; i < chats[curChatID]["messages"].size(); i++) {
+        chatString += QString::fromStdString(chats[curChatID]["messages"][i]["content"]);
+        chatString += "\n\n";
+    }
+    std::cout << chatString.toStdString() << std::endl;
+    return chatString;
 }
 
 void ChatixMainWindow::on_sendButton_clicked()
@@ -30,9 +37,8 @@ void ChatixMainWindow::on_sendButton_clicked()
             {"role", "user"},
             {"content", ui->questionEdit->toPlainText().toStdString()}
         });
-        // Выводим его в чат
-        ui->chatBox->append(ui->questionEdit->toPlainText());
         // Получаем ответ от сервера
+        ui->chatBox->setMarkdown(genMD());
         nlohmann::json response = model->call_answer(chats[curChatID]);
         if (!response.is_null()) {
             std::string llmContent = response["choices"][0]["message"]["content"];
@@ -41,11 +47,41 @@ void ChatixMainWindow::on_sendButton_clicked()
                 {"content", llmContent}
             });
         }
-        // chats[0]["messages"];
-        ui->chatBox->append(QString::fromStdString(response["choices"][0]["message"]["content"]));
+        // Выводим новый вопрос-ответ
+        ui->chatBox->setMarkdown(genMD());
     } catch (std::runtime_error &e) {
         std::cout << e.what() << std::endl;
     }
 }
 
 
+
+void ChatixMainWindow::on_hideChatListButton_clicked()
+{
+    bool currentlyVisible = ui->chatList->isVisible();
+
+    // Переключаем видимость
+    ui->chatList->setVisible(!currentlyVisible);
+    ui->chatListLabel->setVisible(!currentlyVisible);
+
+    // Обновляем флаг
+    chatListHidedByUser = currentlyVisible;
+}
+
+void ChatixMainWindow::resizeEvent(QResizeEvent *event)
+{
+    QMainWindow::resizeEvent(event);
+
+    qDebug() << event->size().width();
+
+    if (event->size().width() <= 450) {
+        ui->chatList->setVisible(false);
+        ui->chatListLabel->setVisible(false);
+    } else if (event->size().width() > 450) {
+        if (!chatListHidedByUser) {
+            qDebug() << chatListHidedByUser << " " << "Теперь видно";
+            ui->chatList->setVisible(true);
+            ui->chatListLabel->setVisible(true);
+        }
+    }
+}

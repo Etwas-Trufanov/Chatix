@@ -22,6 +22,8 @@ private slots:
 
     void on_sendButton_clicked();
 
+    void on_hideChatListButton_clicked();
+
 private:
 
     Ui::ChatixMainWindow *ui;
@@ -36,12 +38,17 @@ private:
 
     std::vector<nlohmann::json> chats;
 
+    bool chatListHidedByUser = false;
+
     std::size_t curChatID = 0;
 
     std::unique_ptr<lmc::llm> model;
 
     std::string context;
 
-    std::string genHTML();
+    QString genMD();
+
+    protected:
+    void resizeEvent(QResizeEvent *event) override;
 };
 #endif // CHATIXMAINWINDOW_H
