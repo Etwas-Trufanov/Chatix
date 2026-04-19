@@ -52,8 +52,10 @@ void ChatixMainWindow::on_sendButton_clicked()
         // Выводим новый вопрос-ответ
         ui->chatBox->setMarkdown(genMD());
     } catch (std::runtime_error &e) {
-        std::cout << e.what() << std::endl;
-    }
+        qDebug() << e.what();
+    }/* catch (...) {
+        qDebug() << "Ошибка";
+    }*/
 }
 
 
