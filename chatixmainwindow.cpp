@@ -39,8 +39,12 @@ void ChatixMainWindow::on_sendButton_clicked()
             {"role", "user"},
             {"content", ui->questionEdit->toPlainText().toStdString()}
         });
-        // Получаем ответ от сервера
+        // Обновляем текст
         ui->chatBox->setMarkdown(genMD());
+        // Очищаем поле ввода
+        ui->questionEdit->clear();
+        // Получаем ответ от сервера
+        ui->sendButton->setEnabled(false);
         nlohmann::json response = model->call_answer(chats[curChatID]);
         if (!response.is_null()) {
             std::string llmContent = response["choices"][0]["message"]["content"];
@@ -49,8 +53,9 @@ void ChatixMainWindow::on_sendButton_clicked()
                 {"content", llmContent}
             });
         }
-        // Выводим новый вопрос-ответ
+        // Обновляем текст
         ui->chatBox->setMarkdown(genMD());
+        ui->sendButton->setEnabled(true);
     } catch (std::runtime_error &e) {
         qDebug() << e.what();
     }/* catch (...) {
