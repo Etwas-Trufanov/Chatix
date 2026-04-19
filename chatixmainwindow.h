@@ -2,6 +2,7 @@
 #define CHATIXMAINWINDOW_H
 #include "llmconnector.hpp"
 #include <QMainWindow>
+#include <qlistwidget.h>
 #include <vector>
 
 QT_BEGIN_NAMESPACE
@@ -24,6 +25,10 @@ private slots:
 
     void on_hideChatListButton_clicked();
 
+    void on_newChatButton_clicked();
+
+    void on_chatList_itemClicked(QListWidgetItem *item);
+
 private:
 
     Ui::ChatixMainWindow *ui;
@@ -35,6 +40,8 @@ private:
 "temperature": 0.7,
 "max_tokens": -1
 })");
+
+    void switchToChat(std::size_t index);
 
     std::vector<nlohmann::json> chats;
 

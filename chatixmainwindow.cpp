@@ -4,6 +4,7 @@
 #include <QtQuickWidgets/QQuickWidget>
 #include <iostream>
 #include <QResizeEvent>
+#include <QIcon>
 
 ChatixMainWindow::ChatixMainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -12,6 +13,7 @@ ChatixMainWindow::ChatixMainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     chats.push_back(startMessage);
+    ui->chatList->addItem("Chat 0");
 }
 
 ChatixMainWindow::~ChatixMainWindow()
@@ -63,6 +65,8 @@ void ChatixMainWindow::on_hideChatListButton_clicked()
     // Переключаем видимость
     ui->chatList->setVisible(!currentlyVisible);
     ui->chatListLabel->setVisible(!currentlyVisible);
+    QIcon icon = (currentlyVisible) ? QIcon::fromTheme(QIcon::ThemeIcon::GoNext) : QIcon::fromTheme(QIcon::ThemeIcon::GoPrevious);
+    ui->hideChatListButton->setIcon(icon);
 
     // Обновляем флаг
     chatListHidedByUser = currentlyVisible;
@@ -77,11 +81,35 @@ void ChatixMainWindow::resizeEvent(QResizeEvent *event)
     if (event->size().width() <= 450) {
         ui->chatList->setVisible(false);
         ui->chatListLabel->setVisible(false);
+        QIcon icon = QIcon::fromTheme(QIcon::ThemeIcon::GoNext);
+        ui->hideChatListButton->setIcon(icon);
     } else if (event->size().width() > 450) {
         if (!chatListHidedByUser) {
             qDebug() << chatListHidedByUser << " " << "Теперь видно";
             ui->chatList->setVisible(true);
             ui->chatListLabel->setVisible(true);
+            QIcon icon = QIcon::fromTheme(QIcon::ThemeIcon::GoPrevious);
+            ui->hideChatListButton->setIcon(icon);
         }
     }
 }
+
+void ChatixMainWindow::on_newChatButton_clicked() {
+    chats.push_back(startMessage);
+    ui->chatList->addItem("Chat " + QString::number(chats.size() - 1));
+    switchToChat(chats.size() - 1);
+}
+
+
+void ChatixMainWindow::on_chatList_itemClicked(QListWidgetItem *item) {
+    int index = ui->chatList->row(item);
+    switchToChat(index);
+}
+
+void ChatixMainWindow::switchToChat(std::size_t index) {
+    if (index >= 0 && index < static_cast<int>(chats.size())) {
+        curChatID = index;
+        ui->chatBox->setMarkdown(genMD());
+    }
+}
+
