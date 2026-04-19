@@ -2,6 +2,7 @@
 #include <string>
 #include <stdexcept>
 #include "json.hpp"
+#include "ollama.hpp"
 #include <QNetworkAccessManager>
 #include <QNetworkRequest>
 #include <QNetworkReply>
@@ -9,27 +10,14 @@
 #include <QUrl>
 
 namespace lmc {
-    class llm {
-        public:
-        llm() = default;
-        virtual nlohmann::json call_answer(nlohmann::json &context) = 0;
-        virtual ~llm() = default;
-    };
-
-    class llama_cpp : public llm {
-        public:
-            nlohmann::json call_answer(nlohmann::json &context) override {
-                return nlohmann::json::parse(R"("pukpuk")");
-            }
-    };
-    class remote_llm : public llm {
+    class lmster : public QObject {
         private:
             QNetworkAccessManager* manager;
             std::string server_url;
         public:
-            remote_llm(const std::string &ip) : server_url(ip), manager(new QNetworkAccessManager()) {}
+            lmster(const std::string &ip) : server_url(ip), manager(new QNetworkAccessManager()) {}
 
-            nlohmann::json call_answer(nlohmann::json &context) override {
+            nlohmann::json call_answer(nlohmann::json &context) {
                 QNetworkRequest request(QString::fromStdString(server_url));
                 request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
 
@@ -54,7 +42,7 @@ namespace lmc {
                 return result;
             }
 
-            ~remote_llm() override {
+            ~lmster() override {
                 delete manager;
             }
     };

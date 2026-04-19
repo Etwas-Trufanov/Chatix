@@ -11,6 +11,14 @@ class ChatixMainWindow;
 }
 QT_END_NAMESPACE
 
+// Структура чата
+struct chatElement {
+    bool isGenerating = false;
+    nlohmann::json data;
+    chatElement(nlohmann::json systemPromt) : data(systemPromt) {}
+    ~chatElement() = default;
+};
+
 class ChatixMainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -43,17 +51,17 @@ private:
 
     void switchToChat(std::size_t index);
 
-    std::vector<nlohmann::json> chats;
+    std::vector<chatElement> chats;
 
     bool chatListHidedByUser = false;
 
     std::size_t curChatID = 0;
 
-    std::unique_ptr<lmc::llm> model;
+    std::unique_ptr<lmc::lmster> model;
 
     std::string context;
 
-    QString genMD();
+    QString genMD(std::size_t chatID);
 
     protected:
     void resizeEvent(QResizeEvent *event) override;
