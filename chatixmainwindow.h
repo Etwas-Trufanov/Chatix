@@ -37,6 +37,8 @@ private slots:
 
     void on_chatList_itemClicked(QListWidgetItem *item);
 
+    void on_settingsButton_clicked();
+
 private:
 
     Ui::ChatixMainWindow *ui;

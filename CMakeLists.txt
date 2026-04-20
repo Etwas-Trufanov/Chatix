@@ -28,6 +28,7 @@ qt_add_executable(Chatix
     ollama.hpp
     lmmanager.hpp
     errordialog.h errordialog.cpp errordialog.ui
+    settingswindow.h settingswindow.cpp settingswindow.ui
 
 
 )

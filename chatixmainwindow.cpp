@@ -3,6 +3,7 @@
 #include "errordialog.h"
 #include "lmmanager.hpp"
 #include "llmconnector.hpp"
+#include "settingswindow.h"
 #include <QtQuickWidgets/QQuickWidget>
 #include <iostream>
 #include <QResizeEvent>
@@ -11,14 +12,14 @@
 ChatixMainWindow::ChatixMainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::ChatixMainWindow),
-    model(std::make_unique<lmc::lmster>("http://localhost:1234/v1/chat/completions"))
+    model(std::make_unique<lmc::lmster>("http://localhost:8080/v1/chat/completions"))
 {
     ui->setupUi(this);
     chats.push_back(startMessage);
     ui->chatList->addItem("Chat 0");
     int isLmsInstalled = lmmanager::checkLmsInstallation();
     qDebug() << "LMS state:" << isLmsInstalled;
-    if (isLmsInstalled != 1) {
+    if (isLmsInstalled != 0) {
         #ifdef _WIN32
             QString cmd = QString::fromStdString("powershell -Command \"irm https://lmstudio.ai/install.ps1 | iex\"");
         #else
@@ -146,3 +147,10 @@ void ChatixMainWindow::switchToChat(std::size_t index) {
         ui->chatBox->setMarkdown(genMD(index));
     }
 }
+
+void ChatixMainWindow::on_settingsButton_clicked()
+{
+    settingsWindow *settings = new settingsWindow();
+    settings->exec();
+}
+
