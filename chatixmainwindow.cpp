@@ -1,6 +1,5 @@
 #include "chatixmainwindow.h"
 #include "./ui_chatixmainwindow.h"
-#include "errordialog.h"
 #include "lmmanager.hpp"
 #include "llmconnector.hpp"
 #include "settingswindow.h"
@@ -25,13 +24,16 @@ ChatixMainWindow::ChatixMainWindow(QWidget *parent) :
         #else
             QString termCommand = QString::fromStdString("curl -fsSL https://lmstudio.ai/install.sh | bash");
         #endif
-        ErrorDialog *err = new ErrorDialog(QString::fromStdString("The LMS package was not detected on your system.\nIt is required for proper program functionality.\nInstall it now?"),
-                                           QString::fromStdString("Install"),
-                                           QString::fromStdString("Exit"),
-                                           termCommand,
-                                           this);
-        err->exec();
+            qDebug() << "lms not installed!";
     }
+
+    // В планах:
+    // Загружаем конфиг из памяти
+
+    // Сейчас
+    // Опрашиваем все провайдеры по очереди пока не найдём первый доступный
+
+
 }
 
 ChatixMainWindow::~ChatixMainWindow()

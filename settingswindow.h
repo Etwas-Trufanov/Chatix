@@ -17,6 +17,7 @@ public:
 
 private:
     Ui::settingsWindow *ui;
+
 };
 
 #endif // SETTINGSWINDOW_H
