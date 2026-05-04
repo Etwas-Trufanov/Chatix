@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>538</width>
-    <height>133</height>
+    <width>563</width>
+    <height>160</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -15,97 +15,180 @@
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <item row="0" column="0">
-    <layout class="QHBoxLayout" name="lmsLayout">
+    <layout class="QVBoxLayout" name="settingsLayout">
      <item>
-      <widget class="QComboBox" name="lmsSelectorBox">
-       <property name="minimumSize">
-        <size>
-         <width>90</width>
-         <height>0</height>
-        </size>
-       </property>
-       <property name="maximumSize">
-        <size>
-         <width>90</width>
-         <height>16777215</height>
-        </size>
-       </property>
+      <layout class="QHBoxLayout" name="usernameLayout">
        <item>
-        <property name="text">
-         <string>ollama</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>llama.cpp</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>lms</string>
-        </property>
-       </item>
-      </widget>
-     </item>
-     <item>
-      <layout class="QVBoxLayout" name="verticalLayout">
-       <item>
-        <widget class="QLabel" name="lmsterIsInstalledLabel">
-         <property name="minimumSize">
-          <size>
-           <width>150</width>
-           <height>0</height>
-          </size>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>150</width>
-           <height>16777215</height>
-          </size>
-         </property>
+        <widget class="QLabel" name="nameLabel">
          <property name="text">
-          <string>lmster installation status</string>
+          <string>Your name</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QLabel" name="lmsterIsInstalledStatus">
+        <widget class="QLineEdit" name="nameEdit">
          <property name="maximumSize">
           <size>
-           <width>80</width>
+           <width>200</width>
            <height>16777215</height>
           </size>
          </property>
-         <property name="text">
-          <string>Installed</string>
-         </property>
         </widget>
+       </item>
+       <item>
+        <spacer name="horizontalSpacer">
+         <property name="orientation">
+          <enum>Qt::Orientation::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
        </item>
       </layout>
      </item>
      <item>
-      <layout class="QVBoxLayout" name="verticalLayout_2">
+      <layout class="QVBoxLayout" name="providerLayout">
        <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_3">
+        <widget class="QLabel" name="selectProviderLabel">
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>20</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>Select provider</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="providerSettingsLayout">
          <item>
-          <widget class="QLabel" name="ListModelLabel">
-           <property name="maximumSize">
+          <widget class="QComboBox" name="ProviderSelectorBox">
+           <property name="minimumSize">
             <size>
-             <width>50</width>
-             <height>40</height>
+             <width>90</width>
+             <height>0</height>
             </size>
            </property>
-           <property name="text">
-            <string>Model</string>
+           <property name="maximumSize">
+            <size>
+             <width>90</width>
+             <height>16777215</height>
+            </size>
            </property>
+           <item>
+            <property name="text">
+             <string>lms</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>ollama</string>
+            </property>
+           </item>
           </widget>
          </item>
          <item>
-          <widget class="QComboBox" name="comboBox"/>
+          <layout class="QVBoxLayout" name="verticalLayout">
+           <item>
+            <widget class="QLabel" name="lmsterIsInstalledLabel">
+             <property name="minimumSize">
+              <size>
+               <width>150</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>150</width>
+               <height>16777215</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>lmster installation status:</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="lmsterIsInstalledStatus">
+             <property name="maximumSize">
+              <size>
+               <width>80</width>
+               <height>16777215</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>Installed</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayout_2">
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_3">
+             <item>
+              <widget class="QLabel" name="ListModelLabel">
+               <property name="maximumSize">
+                <size>
+                 <width>50</width>
+                 <height>40</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>Model</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QComboBox" name="comboBox">
+               <property name="minimumSize">
+                <size>
+                 <width>200</width>
+                 <height>0</height>
+                </size>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="horizontalSpacer_2">
+               <property name="orientation">
+                <enum>Qt::Orientation::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+            </layout>
+           </item>
+          </layout>
          </item>
         </layout>
        </item>
       </layout>
+     </item>
+     <item>
+      <spacer name="verticalSpacer">
+       <property name="orientation">
+        <enum>Qt::Orientation::Vertical</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>20</width>
+         <height>40</height>
+        </size>
+       </property>
+      </spacer>
      </item>
     </layout>
    </item>

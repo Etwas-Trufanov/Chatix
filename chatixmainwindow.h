@@ -1,9 +1,12 @@
 #ifndef CHATIXMAINWINDOW_H
 #define CHATIXMAINWINDOW_H
-#include "llmconnector.hpp"
 #include <QMainWindow>
 #include <qlistwidget.h>
 #include <vector>
+
+#include "llmconnector.hpp"
+#include "lmmanager.hpp"
+#include "settingswindow.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -43,13 +46,9 @@ private:
 
     Ui::ChatixMainWindow *ui;
 
-    const nlohmann::json startMessage = nlohmann::json::parse(R"({
-"messages": [
-  {"role": "system", "content": "Ты полезный ассистент."}
-],
-"temperature": 0.7,
-"max_tokens": -1
-})");
+    settingsData::TSettings current_settings;
+
+    nlohmann::json genStartMessage(const QString &modelName, const QString &userName);
 
     void switchToChat(std::size_t index);
 
@@ -59,7 +58,8 @@ private:
 
     std::size_t curChatID = 0;
 
-    std::unique_ptr<lmc::lmster> model;
+    std::unique_ptr<lmc::LLMClient> provider;
+    std::unique_ptr<lmManagers::lmManager> manager;
 
     std::string context;
 
