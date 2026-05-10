@@ -14,34 +14,34 @@ ChatixMainWindow::ChatixMainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    // Ищем конфиг
-    // тут типа код
-
-
-
-    settingsData::TSettings current_settings = settingsData::TSettings(
+    current_settings = settingsData::TSettings(
         settingsData::LMSTER,
-        "http://localhost:1234/v1/chat/completions",
+        "http://localhost:1234",
         "google/gemma-4-e4b",
         "http://localhost:11434",
         "granite4.1:3b"
         );
 
+    // Инициализация с обработкой ошибок
     try {
+        // В зависимости от провайдера
         switch (current_settings.provider) {
-        case settingsData::LMSTER:
-            provider = std::make_unique<lmc::LMStudioClient>(current_settings.lmsIp.toStdString());
-            manager = std::make_unique<lmManagers::lmstudioManager>();
-            chats.push_back(genStartMessage(current_settings.lmsterModelName, "Petya"));
-            break;
-        case settingsData::OLLAMA:
-            // ✅ Было LMStudioClient, меняем на OllamaClient
-            provider = std::make_unique<lmc::OllamaClient>(current_settings.ollamaIp.toStdString());
-            manager = std::make_unique<lmManagers::ollamaManager>();
-            chats.push_back(genStartMessage(current_settings.ollamaModelName, "Petya"));
-            break;
+            case settingsData::LMSTER:
+                provider = std::make_unique<lmc::LMStudioClient>(current_settings.lmsIp.toStdString());
+                manager = std::make_unique<lmManagers::lmstudioManager>();
+                chats.push_back(genStartMessage(current_settings.lmsterModelName, "Petya"));
+                break;
+            case settingsData::OLLAMA:
+                qDebug() << current_settings.ollamaIp.toStdString() << " in switch case";
+                provider = std::make_unique<lmc::OllamaClient>(current_settings.ollamaIp.toStdString());
+                manager = std::make_unique<lmManagers::ollamaManager>();
+                chats.push_back(genStartMessage(current_settings.ollamaModelName, "Petya"));
+                break;
         }
-        manager->startServer();
+        // After successful initialization, set up the UI state for the first chat
+        ui->chatList->addItem("Chat 0"); // Добавление пустого чата
+        switchToChat(0); // Переключаемся на чат (особого смысла нету)
+
     } catch (const std::exception& e) {
         qDebug() << "Error:" << e.what();
     }
@@ -80,6 +80,14 @@ nlohmann::json ChatixMainWindow::genStartMessage(const QString &modelName, const
 void ChatixMainWindow::on_sendButton_clicked()
 {
     std::size_t tmpID = curChatID;
+
+    // 1. Update model name in the chat data structure based on current settings
+    if (current_settings.provider == settingsData::lmprovider::LMSTER) {
+        chats[tmpID].data["model"] = current_settings.lmsterModelName.toStdString();
+    } else if (current_settings.provider == settingsData::lmprovider::OLLAMA) {
+        chats[tmpID].data["model"] = current_settings.ollamaModelName.toStdString();
+    }
+
     try {
         // Добавляем вопрос пользователя в контекст
         chats[tmpID].data["messages"].push_back({
@@ -101,7 +109,8 @@ void ChatixMainWindow::on_sendButton_clicked()
         qDebug() << "Message was пришло..." << response.dump(2);
 
         if (!response.is_null()) {
-            std::string llmContent = response["choices"][0]["message"]["content"];
+            std::string llmContent = provider->call_and_parse(chats[tmpID].data);
+
             chats[tmpID].data["messages"].push_back({
                 {"role", "assistant"},
                 {"content", llmContent}
@@ -210,4 +219,3 @@ void ChatixMainWindow::on_settingsButton_clicked()
         }
     }
 }
-

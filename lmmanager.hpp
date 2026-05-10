@@ -84,18 +84,18 @@ namespace lmManagers {
     };
 
     //
-    // 🔹 LM Studio (LMS)
+    // LM Studio (LMS)
     //
     class lmstudioManager : public lmManager {
     public:
         using lmManager::lmManager;
 
         bool checkServerInstallation() override {
-    #ifdef _WIN32
-            return isCommandAvailable("lmstudio.exe");
-    #else
-            return isCommandAvailable("lmstudio");
-    #endif
+            #ifdef _WIN32
+                return isCommandAvailable("lmstudio.exe");
+            #else
+                return isCommandAvailable("lms");
+            #endif
         }
 
         bool startServer() override {
@@ -104,13 +104,13 @@ namespace lmManagers {
                 return true;
             }
 
-    #ifdef _WIN32
-            QString program = "lmstudio.exe";
-    #else
-            QString program = "lmstudio";
-    #endif
+            #ifdef _WIN32
+                    QString program = "lmstudio.exe";
+            #else
+                    QString program = "lms";
+            #endif
 
-            process.start(program);
+                    process.start(program, {"server start"});
 
             if (!process.waitForStarted()) {
                 qDebug() << "Failed to start LM Studio";

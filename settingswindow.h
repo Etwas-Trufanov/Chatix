@@ -34,8 +34,8 @@ namespace settingsData {
 
                                         ollamaIp(ollamaIp),
                                         ollamaModelName(ollamaModelName) {}
-        TSettings() : provider(settingsData::LMSTER), lmsIp("http://localhost:1234/v1/chat/completions"), lmsterModelName("google/gemma-4-e4b"),
-            ollamaIp("http://localhost:1234/api/chat"), ollamaModelName("granite4.1:3b") {}
+        TSettings() : provider(settingsData::LMSTER), lmsIp("http://localhost:1234"), lmsterModelName("google/gemma-4-e4b"),
+            ollamaIp("http://localhost:11434"), ollamaModelName("granite4.1:3b") {}
     };
 }
 
