@@ -25,10 +25,12 @@ qt_add_executable(Chatix
     MANUAL_FINALIZATION
     ${PROJECT_SOURCES}
     llmconnector.hpp
-    ollama.hpp
+
     lmmanager.hpp
 
     settingswindow.h settingswindow.cpp settingswindow.ui
+    inputnamewindow.h inputnamewindow.cpp inputnamewindow.ui
+    checkUserName.h
 
 
 )

@@ -7,6 +7,7 @@
 #include <QNetworkReply>
 #include <QEventLoop>
 #include <QUrl>
+#include <QTimer>
 
 namespace lmc {
 
@@ -54,16 +55,38 @@ class LLMClient : public QObject {
 
         /**
              * @brief GET запрос
-             * @param url полный URL (endpoint)
+             * @param url полный URL (endpoint), timeout таймаут
              * @return JSON ответ сервера
              */
-        nlohmann::json get_json(const std::string& url) {
+        nlohmann::json get_json(const std::string& url, uint timeout) {
             QNetworkRequest request(QString::fromStdString(url));
             QNetworkReply* reply = manager->get(request);
 
             QEventLoop loop;
+
+            QTimer timer;
+            bool timedOut = false;
+
             QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+
+            // Лямбда фунция, она прерывает запрос
+            QObject::connect(&timer, &QTimer::timeout, [&]() {
+                timedOut = true;
+                reply->abort();
+                loop.quit();
+            });
+
+            if (timeout > 0) {
+                timer.setSingleShot(true);
+                timer.start(timeout * 1000);
+            }
+
             loop.exec();
+
+            if (timedOut) {
+                reply->deleteLater();
+                throw std::runtime_error("Request timeout");
+            }
 
             if (reply->error() != QNetworkReply::NoError) {
                 std::string errorMsg = reply->errorString().toStdString();
@@ -133,12 +156,12 @@ class LMStudioClient : public LLMClient {
 
         /**
              * @brief Получение моделей
-             * endpoint: /models
+             * endpoint: /v1/models
              * ожидаемый ответ:
              * { "data": [ { "id": "model_name" } ] }
              */
         nlohmann::json get_models() override {
-            auto result = get_json(server_url + "/models");
+            auto result = get_json(server_url + "/v1/models", 2);
 
             nlohmann::json models = nlohmann::json::array();
 
@@ -174,7 +197,7 @@ public:
     }
 
     nlohmann::json get_models() override {
-        auto result = get_json(server_url + "/api/tags");
+        auto result = get_json(server_url + "/api/tags", 2);
 
         nlohmann::json models = nlohmann::json::array();
         for (auto& m : result["models"]) {
