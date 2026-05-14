@@ -4,11 +4,13 @@
 #include <QIcon>
 #include <QDateTime>
 #include <QMessageBox>
-
+#include <QDir>
+#include <QFile>
+#include <qstandardpaths.h>
 
 
 #include "./ui_chatixmainwindow.h"
-#include "lmmanager.hpp"
+// #include "lmmanager.hpp"
 #include "llmconnector.hpp"
 #include "settingswindow.h"
 
@@ -33,14 +35,12 @@ ChatixMainWindow::ChatixMainWindow(QWidget *parent) :
                 case settingsData::LMSTER:
                     goodInit = true;
                     provider = std::make_unique<lmc::LMStudioClient>(current_settings.lmsIp.toStdString());
-                    manager = std::make_unique<lmManagers::lmstudioManager>();
-                    chats.push_back(genStartMessage(current_settings.lmsterModelName, current_settings.userName));
+                    // manager = std::make_unique<lmManagers::lmstudioManager>();
                     break;
                 case settingsData::OLLAMA:
                     goodInit = true;
                     provider = std::make_unique<lmc::OllamaClient>(current_settings.ollamaIp.toStdString());
-                    manager = std::make_unique<lmManagers::ollamaManager>();
-                    chats.push_back(genStartMessage(current_settings.ollamaModelName, current_settings.userName));
+                    // manager = std::make_unique<lmManagers::ollamaManager>();
                     break;
                 default:
                     QMessageBox::information(parentWidget(), "Ошибка", "Не запущен ни один провайдер:\nOllama\nLMStudio\nЗапустите их и нажмите OK");
@@ -52,12 +52,19 @@ ChatixMainWindow::ChatixMainWindow(QWidget *parent) :
         }
     }
 
-    addChatByDate("Чат"); // Добавление пустого чата
-    switchToChat(0); // Переключаемся на чат (особого смысла нету)
-
-    qDebug() << "Window created";
-    qDebug() << "Параметры после запуска:\nИмя пользователя:" << current_settings.userName << "\nМодель ollama:" << current_settings.ollamaModelName << "\nМодель lms:" << current_settings.lmsterModelName;
-
+    if (!loadChatHistoryAndSettings()) {
+        qDebug() << "Нет сохранённых чатов, создаём новый";
+        addChatByDate("Чат");
+    } else {
+        qDebug() << "Загружено чатов:" << chats.size();
+        if (ui->chatList->count() == 0 && !chats.empty()) {
+            for (const auto &chat : chats) {
+                ui->chatList->addItem(chat.title);
+            }
+        }
+    }
+    addChatByDate("Чат");
+    switchToChat(chats.size()-1);
 }
 
 ChatixMainWindow::~ChatixMainWindow()
@@ -89,14 +96,24 @@ nlohmann::json ChatixMainWindow::genStartMessage(const QString &modelName, const
 }
 
 
-void ChatixMainWindow::addChatByDate(const QString &string) {
-    // Получаем текущую дату и время
-    QDateTime now = QDateTime::currentDateTime();
+void ChatixMainWindow::addChatByDate(const QString &baseTitle) {
+    // Создаём системный промпт для нового чата
+    nlohmann::json startMsg;
+    if (current_settings.provider == settingsData::LMSTER) {
+        startMsg = genStartMessage(current_settings.lmsterModelName, current_settings.userName);
+    } else {
+        startMsg = genStartMessage(current_settings.ollamaModelName, current_settings.userName);
+    }
 
-    // Преобразовываем в строку
-    QString dateTimeString = now.toString("dd.MM.yyyy hh:mm:ss");
+    // Формируем заголовок с датой/временем
+    QString dateTime = QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm:ss");
+    QString title = baseTitle + " " + dateTime;
 
-    ui->chatList->addItem(string + " " + dateTimeString);
+    // Добавляем чат в вектор
+    chats.emplace_back(startMsg, title);
+
+    // Добавляем элемент в список
+    ui->chatList->addItem(title);
 }
 
 void ChatixMainWindow::on_sendButton_clicked()
@@ -192,19 +209,9 @@ void ChatixMainWindow::resizeEvent(QResizeEvent *event)
 }
 
 void ChatixMainWindow::on_newChatButton_clicked() {
-    switch (current_settings.provider) {
-    case settingsData::lmprovider::LMSTER:
-        chats.push_back(genStartMessage(current_settings.lmsterModelName, current_settings.userName));
-        break;
-    case settingsData::lmprovider::OLLAMA:
-        chats.push_back(genStartMessage(current_settings.ollamaModelName, current_settings.userName));
-        break;
-    case settingsData::lmprovider::NONE:
-        break;
-    }
-
-    ui->chatList->addItem("Chat " + QString::number(chats.size() - 1));
+    addChatByDate("Чат");
     switchToChat(chats.size() - 1);
+    saveChatHistoryAndSettings();
 }
 
 
@@ -268,4 +275,124 @@ void ChatixMainWindow::on_settingsButton_clicked() {
     }
 }
 
+bool ChatixMainWindow::saveChatHistoryAndSettings() {
+    // Определяем путь к файлу
+    QString configDir = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
+    QDir dir(configDir);
+    if (!dir.exists()) dir.mkpath(".");
+    QString filePath = configDir + "/chatix_data.json";
+
+    nlohmann::json output;
+    // Сохраняем настройки
+    output["settings"]["provider"] = current_settings.provider;
+    output["settings"]["lmsIp"] = current_settings.lmsIp.toStdString();
+    output["settings"]["lmsterModelName"] = current_settings.lmsterModelName.toStdString();
+    output["settings"]["ollamaIp"] = current_settings.ollamaIp.toStdString();
+    output["settings"]["ollamaModelName"] = current_settings.ollamaModelName.toStdString();
+    output["settings"]["userName"] = current_settings.userName.toStdString();
+
+    // Сохраняем чаты
+    nlohmann::json chatsArray = nlohmann::json::array();
+    for (const auto &chat : chats) {
+        // Отсеиваем пустые чаты
+        if (chat.data["messages"].size() > 1) {
+            nlohmann::json chatObj;
+            chatObj["title"] = chat.title.toStdString();
+            chatObj["data"] = chat.data;   // data уже nlohmann::json
+            chatsArray.push_back(chatObj);
+        }
+    }
+    output["chats"] = chatsArray;
+
+    // Записываем в файл
+    QFile file(filePath);
+    if (!file.open(QIODevice::WriteOnly)) {
+        qDebug() << "Не удалось открыть файл для записи:" << filePath;
+        return false;
+    }
+    std::string jsonStr = output.dump(2);
+    file.write(jsonStr.c_str());
+    file.close();
+    qDebug() << "Сохранено в" << filePath;
+    return true;
+}
+
+bool ChatixMainWindow::loadChatHistoryAndSettings() {
+    QString configDir = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
+    QString filePath = configDir + "/chatix_data.json";
+    QFile file(filePath);
+    if (!file.exists() || !file.open(QIODevice::ReadOnly)) {
+        qDebug() << "Файл сохранений не найден, создаём новый";
+        return false;
+    }
+
+    QByteArray data = file.readAll();
+    file.close();
+    nlohmann::json loaded;
+    try {
+        loaded = nlohmann::json::parse(data.toStdString());
+    } catch (const std::exception &e) {
+        qDebug() << "Ошибка парсинга JSON:" << e.what();
+        return false;
+    }
+
+    // Загружаем настройки
+    if (loaded.contains("settings")) {
+        auto &s = loaded["settings"];
+        current_settings.provider = static_cast<settingsData::lmprovider>(s.value("provider", 2));
+        current_settings.lmsIp = QString::fromStdString(s.value("lmsIp", "http://localhost:1234"));
+        current_settings.lmsterModelName = QString::fromStdString(s.value("lmsterModelName", ""));
+        current_settings.ollamaIp = QString::fromStdString(s.value("ollamaIp", "http://localhost:11434"));
+        current_settings.ollamaModelName = QString::fromStdString(s.value("ollamaModelName", ""));
+        current_settings.userName = QString::fromStdString(s.value("userName", ""));
+    }
+
+    // Очищаем текущие чаты и список
+    chats.clear();
+    ui->chatList->clear();
+
+    // Загружаем чаты
+    if (loaded.contains("chats") && loaded["chats"].is_array()) {
+        for (auto &chatJson : loaded["chats"]) {
+            QString title = QString::fromStdString(chatJson.value("title", "Безымянный"));
+            nlohmann::json data = chatJson.value("data", nlohmann::json::object());
+            chatElement newChat(data, title);
+            chats.push_back(newChat);
+            ui->chatList->addItem(title);
+        }
+    }
+
+    // Если чатов нет – создаём один
+    if (chats.empty()) {
+        addChatByDate("Чат");
+    }
+
+    // Обновляем провайдера в соответствии с загруженными настройками
+    try {
+        switch (current_settings.provider) {
+        case settingsData::OLLAMA:
+            provider = std::make_unique<lmc::OllamaClient>(current_settings.ollamaIp.toStdString());
+            break;
+        case settingsData::LMSTER:
+            provider = std::make_unique<lmc::LMStudioClient>(current_settings.lmsIp.toStdString());
+            break;
+        default:
+            qDebug() << "Провайдер не установлен";
+            break;
+        }
+    } catch (const std::exception &e) {
+        qDebug() << "Ошибка инициализации провайдера:" << e.what();
+        return false;
+    }
+
+    return true;
+}
+
+void ChatixMainWindow::closeEvent(QCloseEvent *event) {
+    if (saveChatHistoryAndSettings()) {
+        qDebug() << "Chats saved!";
+    } else {
+        qDebug() << "Chats not saved(!";
+    }
+}
 

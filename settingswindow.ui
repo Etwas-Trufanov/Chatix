@@ -83,12 +83,12 @@
            </property>
            <item>
             <property name="text">
-             <string>lms</string>
+             <string>LMStudio</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>ollama</string>
+             <string>Ollama</string>
             </property>
            </item>
           </widget>

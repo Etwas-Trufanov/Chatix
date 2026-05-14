@@ -1,2 +1,4 @@
 # Chatix
-A simple chat client with built-in ollama
+Простой чат-бот
+Поддерживает LMStudio API и Ollama
+

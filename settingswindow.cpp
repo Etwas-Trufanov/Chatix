@@ -77,6 +77,7 @@ settingsData::TSettings::TSettings(const QString &userName) : userName(userName)
 
     } catch (const std::exception& e) {
         qDebug() << "Ollama error:" << e.what();
+
     }
 
     // LMStudio
@@ -109,38 +110,48 @@ void settingsWindow::UpdateSetModelList() {    // Блокируем сигна�
     ui->modelSelector->blockSignals(true);
     ui->modelSelector->clear();
 
-    if (param.provider == settingsData::LMSTER) {
-        lmc::LMStudioClient lms(param.lmsIp.toStdString());
-        nlohmann::json modelList = lms.get_models();
+    try {
+        if (param.provider == settingsData::LMSTER) {
+            lmc::LMStudioClient lms(param.lmsIp.toStdString());
+            nlohmann::json modelList = lms.get_models();
 
-        for (auto &i : modelList) {
-            ui->modelSelector->addItem(QString::fromStdString(i.get<std::string>()));
-        }
+            for (auto &i : modelList) {
+                ui->modelSelector->addItem(QString::fromStdString(i.get<std::string>()));
+            }
 
-        // Пытаемся найти модель по названию и подставить её в список
-        if (!param.lmsterModelName.isEmpty()) {
-            int index = ui->modelSelector->findText(param.lmsterModelName);
-            if (index != -1) {
-                ui->modelSelector->setCurrentIndex(index);
-                qDebug() << "Model in list find in pos:" << index;
+            // Пытаемся найти модель по названию и подставить её в список
+            if (!param.lmsterModelName.isEmpty()) {
+                int index = ui->modelSelector->findText(param.lmsterModelName);
+                if (index != -1) {
+                    ui->modelSelector->setCurrentIndex(index);
+                    qDebug() << "Model in list find in pos:" << index;
+                }
             }
         }
+    } catch (const std::exception& e) {
+        qDebug() << "LMStudio error:" << e.what();
+        ui->ProviderSelectorBox->removeItem(0);
     }
-    else if (param.provider == settingsData::OLLAMA) {
-        lmc::OllamaClient ollama(param.ollamaIp.toStdString());
-        nlohmann::json modelList = ollama.get_models();
+    try {
+        if (param.provider == settingsData::OLLAMA) {
+            lmc::OllamaClient ollama(param.ollamaIp.toStdString());
+            nlohmann::json modelList = ollama.get_models();
 
-        for (auto &i : modelList) {
-            ui->modelSelector->addItem(QString::fromStdString(i.get<std::string>()));
-        }
+            for (auto &i : modelList) {
+                ui->modelSelector->addItem(QString::fromStdString(i.get<std::string>()));
+            }
 
-        if (!param.ollamaModelName.isEmpty()) {
-            int index = ui->modelSelector->findText(param.ollamaModelName);
-            if (index != -1) {
-                ui->modelSelector->setCurrentIndex(index);
-                qDebug() << "Model in list find in pos:" << index;
+            if (!param.ollamaModelName.isEmpty()) {
+                int index = ui->modelSelector->findText(param.ollamaModelName);
+                if (index != -1) {
+                    ui->modelSelector->setCurrentIndex(index);
+                    qDebug() << "Model in list find in pos:" << index;
+                }
             }
         }
+    } catch (const std::exception& e) {
+        qDebug() << "OLLAMA error:" << e.what();
+        ui->ProviderSelectorBox->removeItem(1);
     }
     // Разблокируем сигналы
     ui->modelSelector->blockSignals(false);
@@ -176,7 +187,11 @@ void settingsWindow::on_buttonBox_accepted()
 
 void settingsWindow::on_ProviderSelectorBox_currentIndexChanged(int index)
 {
-    param.provider = settingsData::lmprovider(index);
+    if (ui->ProviderSelectorBox->currentText() == "Ollama") {
+        param.provider = settingsData::lmprovider::OLLAMA;
+    } else {
+        param.provider = settingsData::lmprovider::LMSTER;
+    }
     UpdateSetModelList();
 }
 
