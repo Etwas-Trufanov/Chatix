@@ -1,8 +1,6 @@
 #ifndef SETTINGSWINDOW_H
 #define SETTINGSWINDOW_H
 
-#include "json.hpp"
-#include "llmconnector.hpp"
 #include <QDialog>
 
 namespace settingsData {
@@ -25,74 +23,18 @@ namespace settingsData {
         // Имя пользователя
         QString userName;
 
+
+        TSettings();
+        TSettings(const QString &userName);
         TSettings(lmprovider provider,
-                                        const QString &lmsIp,
-                                        const QString &lmsModelName,
+                  const QString &lmsIp,
+                  const QString &lmsModelName,
 
-                                        const QString &ollamaIp,
-                                        const QString &ollamaModelName,
-                                        const QString &userName):
+                  const QString &ollamaIp,
+                  const QString &ollamaModelName,
+                  const QString &userName);
 
-                                        provider(provider),
-
-                                        lmsIp(lmsIp),
-                                        lmsterModelName(lmsModelName),
-
-                                        ollamaIp(ollamaIp),
-                                        ollamaModelName(ollamaModelName),
-                                        userName(userName) {}
-        TSettings() : provider(settingsData::NONE), lmsIp("http://localhost:1234"), lmsterModelName("google/gemma-4-e4b"),
-            ollamaIp("http://localhost:11434"), ollamaModelName("granite4.1:3b"), userName("") {}
-
-        TSettings(const QString &userName) : userName(userName) {
-            ollamaIp = "http://localhost:11434";
-            lmsIp = "http://localhost:1234";
-            provider = lmprovider::NONE;
-
-            nlohmann::json ollamaModels;
-            nlohmann::json lmsModels;
-
-            // Ollama
-            try {
-                auto ollamaClient = lmc::OllamaClient(ollamaIp.toStdString());
-                ollamaModels = ollamaClient.get_models();
-
-                qDebug() << "Ollama models:";
-                qDebug() << ollamaModels.dump(2);
-
-                if (!ollamaModels.empty()) {
-                    ollamaModelName =
-                        QString::fromStdString(ollamaModels[0].get<std::string>());
-                }
-
-            } catch (const std::exception& e) {
-                qDebug() << "Ollama error:" << e.what();
-            }
-
-            // LMStudio
-            try {
-                auto lmsClient = lmc::LMStudioClient(lmsIp.toStdString());
-                lmsModels = lmsClient.get_models();
-
-                qDebug() << "LMStudio models:";
-                qDebug() << lmsModels.dump(2);
-
-                if (!lmsModels.empty()) {
-                    lmsterModelName =
-                        QString::fromStdString(lmsModels[0].get<std::string>());
-
-                    provider = lmprovider::LMSTER;
-                }
-
-            } catch (const std::exception& e) {
-                qDebug() << "LMStudio error:" << e.what();
-            }
-
-            // fallback на Ollama
-            if (provider == lmprovider::NONE && !ollamaModels.empty()) {
-                provider = lmprovider::OLLAMA;
-            }
-        }
+        QString getSystemUsername();
     };
 }
 
@@ -109,6 +51,8 @@ public:
 
     settingsData::TSettings param;
 
+    int showDialog();
+
     ~settingsWindow();
 
 private slots:
@@ -120,6 +64,8 @@ private slots:
 
 private:
     Ui::settingsWindow *ui;
+
+    void UpdateSetModelList();
 };
 
 #endif // SETTINGSWINDOW_H

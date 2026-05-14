@@ -50,6 +50,8 @@ private:
 
     nlohmann::json genStartMessage(const QString &modelName, const QString &userName);
 
+    void addChatByDate(const QString &string);
+
     void switchToChat(std::size_t index);
 
     std::vector<chatElement> chats;

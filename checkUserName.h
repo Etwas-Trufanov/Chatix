@@ -4,11 +4,20 @@
 #include <QString>
 #include <qregularexpression.h>
 
-namespace nameChecker {
-    bool nameIsGood(const QString &name) {
-        static const QRegularExpression regex("^[A-Za-z0-9]+$");
-        return regex.match(name).hasMatch();
-    }
+class checks {
+    public:
+        static bool isValidUsername(const QString& str) {
+            if (str.isEmpty())
+                return false;
+
+            for (QChar ch : str)
+            {
+                if (!ch.isLetterOrNumber())
+                    return false;
+            }
+
+            return true;
+        }
 };
 
 #endif // CHECKUSERNAME_H

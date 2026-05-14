@@ -29,8 +29,10 @@ qt_add_executable(Chatix
     lmmanager.hpp
 
     settingswindow.h settingswindow.cpp settingswindow.ui
-    inputnamewindow.h inputnamewindow.cpp inputnamewindow.ui
+
     checkUserName.h
+
+
 
 
 )

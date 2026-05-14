@@ -2,20 +2,22 @@
 #include <QtQuickWidgets/QQuickWidget>
 #include <QResizeEvent>
 #include <QIcon>
-
+#include <QDateTime>
 #include <QMessageBox>
+
+
 
 #include "./ui_chatixmainwindow.h"
 #include "lmmanager.hpp"
 #include "llmconnector.hpp"
 #include "settingswindow.h"
-#include "inputnamewindow.h"
 
 ChatixMainWindow::ChatixMainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::ChatixMainWindow)
 {
     ui->setupUi(this);
+    qDebug() << "Первый пустой конструктор";
     current_settings = settingsData::TSettings();
 
     bool goodInit = false;
@@ -23,16 +25,10 @@ ChatixMainWindow::ChatixMainWindow(QWidget *parent) :
     while (!goodInit) {
         // Инициализация с обработкой ошибок
         try {
-            current_settings = settingsData::TSettings("");
-            if (goodInit and current_settings.userName == "") {
-                qDebug() << "Username is empty, showing inputnamewindow";
-                inputnamewindow *inputnameui;
-                inputnameui = new inputnamewindow();
-                if (inputnameui->exec() == QDialog::Accepted) {
-                    current_settings.userName = inputnameui->userName;
-                }
-            }
+            qDebug() << "Второй конструктор settingsData::TSettings(\"\")";
+            current_settings = settingsData::TSettings(current_settings.userName);
             // В зависимости от провайдера
+            qDebug() << "Raw provider id in chatix constructor" << current_settings.provider;
             switch (current_settings.provider) {
                 case settingsData::LMSTER:
                     goodInit = true;
@@ -56,10 +52,11 @@ ChatixMainWindow::ChatixMainWindow(QWidget *parent) :
         }
     }
 
-    ui->chatList->addItem("Chat 0"); // Добавление пустого чата
+    addChatByDate("Чат"); // Добавление пустого чата
     switchToChat(0); // Переключаемся на чат (особого смысла нету)
 
     qDebug() << "Window created";
+    qDebug() << "Параметры после запуска:\nИмя пользователя:" << current_settings.userName << "\nМодель ollama:" << current_settings.ollamaModelName << "\nМодель lms:" << current_settings.lmsterModelName;
 
 }
 
@@ -91,6 +88,16 @@ nlohmann::json ChatixMainWindow::genStartMessage(const QString &modelName, const
     };
 }
 
+
+void ChatixMainWindow::addChatByDate(const QString &string) {
+    // Получаем текущую дату и время
+    QDateTime now = QDateTime::currentDateTime();
+
+    // Преобразовываем в строку
+    QString dateTimeString = now.toString("dd.MM.yyyy hh:mm:ss");
+
+    ui->chatList->addItem(string + " " + dateTimeString);
+}
 
 void ChatixMainWindow::on_sendButton_clicked()
 {
@@ -210,25 +217,32 @@ void ChatixMainWindow::switchToChat(std::size_t index) {
     if (index >= 0 && index < static_cast<int>(chats.size())) {
         qDebug() << "Состояние чата " << (chats[index].isGenerating ? "генерирует" : "простаивает");
         ui->sendButton->setEnabled((!chats[index].isGenerating));
+        ui->chatNameLabel->setText(ui->chatList->item(index)->text());
         curChatID = index;
         ui->chatBox->setMarkdown(genMD(index));
     }
 }
 
-void ChatixMainWindow::on_settingsButton_clicked()
-{
+void ChatixMainWindow::on_settingsButton_clicked() {
+    // Создаём экземпляр окна и передаём данные
     settingsWindow *settings = new settingsWindow();
-
     settings->param = current_settings;
 
-    if (settings->exec() == QDialog::Accepted) {
+    // Вызываем его и если внутри было подтверждено -> обрабатываем
+    if (settings->showDialog() == QDialog::Accepted) {
         qDebug() << "before:\nconfig: lms model" << current_settings.lmsterModelName;
         qDebug() << "config: ollama model" << current_settings.ollamaModelName;
         qDebug() << "config: useraname:" << current_settings.userName << "\nold values end";
+
+        // Применяем данные
         current_settings.provider = settings->param.provider;
+        current_settings.lmsterModelName = settings->param.lmsterModelName;
+        current_settings.ollamaModelName = settings->param.ollamaModelName;
         if (settings->param.userName != "" && current_settings.userName != settings->param.userName) {
             current_settings.userName = settings->param.userName;
         }
+
+        // Обрабатываем изменение провайдера
         switch (current_settings.provider) {
         case settingsData::lmprovider::OLLAMA:
             provider.reset();
@@ -244,8 +258,14 @@ void ChatixMainWindow::on_settingsButton_clicked()
             qDebug() << "Now NONE provider(";
             break;
         }
+
+        // Костыль: обновляем в json текущего чата имя пользователя
+        chats[curChatID].data["messages"][0]["content"] = "Ты полезный ассистент" + (!current_settings.userName.toUtf8().toStdString().empty() ? ", а пользователя зовут: " + current_settings.userName.toUtf8().toStdString() : "");
+
         qDebug() << "config: lms model" << current_settings.lmsterModelName;
         qDebug() << "config: ollama model" << current_settings.ollamaModelName;
         qDebug() << "config: useraname:" << current_settings.userName;
     }
 }
+
+
