@@ -111,7 +111,7 @@ QString ChatixMainWindow::genHTML(std::size_t chatID) {
                 <div style="
                     width: 100%;
                     margin-top: 20px;
-                    margin-left: 50px;
+                    margin-left: 100px;
                     text-align: left;
                 ">
                     <div style="
@@ -133,7 +133,7 @@ QString ChatixMainWindow::genHTML(std::size_t chatID) {
                 <div style="
                     width: 100%;
                     margin-top: 20px;
-                    margin-right: 50px;
+                    margin-right: 100px;
                     text-align: left;
                 ">
                     <div style="
