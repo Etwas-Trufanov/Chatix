@@ -31,6 +31,7 @@ qt_add_executable(Chatix
     settingswindow.h settingswindow.cpp settingswindow.ui
 
     checkUserName.h
+    easyAnswer.h
 
 
 

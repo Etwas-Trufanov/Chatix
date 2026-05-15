@@ -13,6 +13,7 @@
 // #include "lmmanager.hpp" // Пока не реализован
 #include "llmconnector.hpp"
 #include "settingswindow.h"
+#include "easyAnswer.h"
 
 // Конструкктор
 ChatixMainWindow::ChatixMainWindow(QWidget *parent) :
@@ -95,7 +96,7 @@ QString ChatixMainWindow::genHTML(std::size_t chatID) {
 
         QString content = QString::fromStdString(
                               chats[chatID].data["messages"][i]["content"]
-                              ).toHtmlEscaped();
+            );//.toHtmlEscaped();
 
         content.replace("\n", "<br>");
 
@@ -164,7 +165,7 @@ nlohmann::json ChatixMainWindow::genStartMessage(const QString &modelName, const
         {"messages", {
                          {
                              {"role", "system"},
-                       {"content", "Ты полезный ассистент, используй HTML форматирование, а не MD" + (!userName.toUtf8().toStdString().empty() ? " Имя пользователя: " + userName.toUtf8().toStdString() : "")}
+                       {"content", "Ты полезный ассистент, используй HTML форматирование: <b>текст</b>, <i>текст</i>, <mark></mark> и другие. НИ В КОЕМ СЛУЧАЕ НЕ ИСПОЛЬЗУЙ MD ФОРМАТИРОВАНИЕ!" + (!userName.toUtf8().toStdString().empty() ? " Имя пользователя: " + userName.toUtf8().toStdString() : "")}
                          }
                      }},
         {"temperature", 0.7},
@@ -207,43 +208,56 @@ void ChatixMainWindow::on_sendButton_clicked() {
     }
 
     try {
+
         // Добавляем вопрос пользователя в контекст
         chats[tmpID].data["messages"].push_back({
             {"role", "user"},
             {"content", ui->questionEdit->toPlainText().toStdString()}
         });
+
+        // Проверяем на простоту вопроса
+        bool ok = true;
+        auto tmpAnswer = easyAnswer::answerOnEasyQuestion(ui->questionEdit->toPlainText(), ok);
         // Очищаем поле ввода
         ui->questionEdit->clear();
-        // Блокируем кнопку и меняем в состояние генерации
-        // И обновляем текст
-        chats[tmpID].isGenerating = true;
-        if (tmpID == curChatID) {
-            ui->sendButton->setEnabled(false);
-            ui->chatBox->setHtml(genHTML(tmpID));
-        }
-        qDebug() << "Send message to LLM provider...";
-        // Получаем ответ от сервера
-        nlohmann::json response = provider->call_answer(chats[tmpID].data);
-        qDebug() << "Message was пришло..." << response.dump(2);
+        if (!ok) {
+            // Блокируем кнопку и меняем в состояние генерации
+            // И обновляем текст
+            chats[tmpID].isGenerating = true;
+            if (tmpID == curChatID) {
+                ui->sendButton->setEnabled(false);
+                ui->chatBox->setHtml(genHTML(tmpID));
+            }
+            qDebug() << "Send message to LLM provider...";
+            // Получаем ответ от сервера
+            nlohmann::json response = provider->call_answer(chats[tmpID].data);
+            qDebug() << "Message was пришло..." << response.dump(2);
 
-        if (!response.is_null()) {
-            std::string llmContent = provider->call_and_parse(chats[tmpID].data);
+            if (!response.is_null()) {
+                std::string llmContent = provider->call_and_parse(chats[tmpID].data);
 
+                chats[tmpID].data["messages"].push_back({
+                    {"role", "assistant"},
+                    {"content", llmContent}
+                });
+            }
+        } else {
             chats[tmpID].data["messages"].push_back({
                 {"role", "assistant"},
-                {"content", llmContent}
+                {"content", tmpAnswer.toStdString()}
             });
         }
-        // Обновляем текст
-        chats[tmpID].isGenerating = false;
-        if (tmpID == curChatID) {
-            ui->sendButton->setEnabled(true);
-            ui->chatBox->setHtml(genHTML(tmpID));
-        }
+
     } catch (std::runtime_error &e) {
         qDebug() << e.what();
     } catch (nlohmann::json_abi_v3_12_0::detail::type_error &e) {
         qDebug() << "Ошибка" << e.what();
+    }
+    // Обновляем текст
+    chats[tmpID].isGenerating = false;
+    if (tmpID == curChatID) {
+        ui->sendButton->setEnabled(true);
+        ui->chatBox->setHtml(genHTML(tmpID));
     }
 }
 
