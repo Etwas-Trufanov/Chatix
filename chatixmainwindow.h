@@ -54,6 +54,12 @@ private slots:
     // Обработчик открытия настроек
     void on_settingsButton_clicked();
 
+    void on_saveAction_triggered();
+
+    void on_clearHistoryAction_triggered();
+
+    void on_closeAction_triggered();
+
 private:
 
     Ui::ChatixMainWindow *ui;
@@ -94,7 +100,7 @@ private:
     // std::unique_ptr<lmManagers::lmManager> manager;          // (пока не реализован)
 
     // Функция генерации красивого
-    QString genMD(std::size_t chatID);
+    QString genHTML(std::size_t chatID);
 
     protected:
 

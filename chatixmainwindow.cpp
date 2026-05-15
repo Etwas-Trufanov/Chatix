@@ -10,10 +10,11 @@
 
 
 #include "./ui_chatixmainwindow.h"
-// #include "lmmanager.hpp"
+// #include "lmmanager.hpp" // Пока не реализован
 #include "llmconnector.hpp"
 #include "settingswindow.h"
 
+// Конструкктор
 ChatixMainWindow::ChatixMainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::ChatixMainWindow)
@@ -68,27 +69,102 @@ ChatixMainWindow::ChatixMainWindow(QWidget *parent) :
     switchToChat(chats.size()-1);
 }
 
+// Деструктор
 ChatixMainWindow::~ChatixMainWindow()
 {
     delete ui;
 }
 
-QString ChatixMainWindow::genMD(std::size_t chatID) {
-    QString chatString;
+// Преобразование текста нейронки в что-то хоть как-то красивое
+// chatID - ID чата
+QString ChatixMainWindow::genHTML(std::size_t chatID) {
+    QString html;
+
+    html += R"(
+    <div style="
+        font-family: sans-serif;
+        padding: 10px;
+    ">
+    )";
+
     for (std::size_t i = 1; i < chats[chatID].data["messages"].size(); i++) {
-        chatString += QString::fromStdString(chats[chatID].data["messages"][i]["content"]);
-        chatString += "\n\n";
+
+        QString role = QString::fromStdString(
+            chats[chatID].data["messages"][i]["role"]
+            );
+
+        QString content = QString::fromStdString(
+                              chats[chatID].data["messages"][i]["content"]
+                              ).toHtmlEscaped();
+
+        content.replace("\n", "<br>");
+
+        bool isUser = (role == "user");
+
+        QString align = isUser ? "left" : "right";
+        QString bgColor = "#EFF0F1";
+
+        // Справа - ответ нейросети
+        if (align == "right") {
+            html += QString(R"(
+                <div style="
+                    width: 100%;
+                    margin-top: 20px;
+                    margin-left: 50px;
+                    text-align: left;
+                ">
+                    <div style="
+                        display: inline-block;
+                        max-width: 70%;
+                        padding: 10px;
+                        border-radius: 12px;
+                        background-color: %2;
+                        word-wrap: break-word;
+                    ">
+                        %3
+                    </div>
+                </div>
+            )")
+                        .arg(bgColor)
+                        .arg(content);
+        } else {
+            html += QString(R"(
+                <div style="
+                    width: 100%;
+                    margin-top: 20px;
+                    margin-right: 50px;
+                    text-align: left;
+                ">
+                    <div style="
+                        display: inline-block;
+                        max-width: 70%;
+                        padding: 10px;
+                        border-radius: 12px;
+                        background-color: %2;
+                        word-wrap: break-word;
+                    ">
+                        %3
+                    </div>
+                </div>
+            )")
+                        .arg(bgColor)
+                        .arg(content);
+        }
     }
-    return chatString;
+
+    html += "</div>";
+
+    return html;
 }
 
+// Генерация стандартного стартового сообщения
 nlohmann::json ChatixMainWindow::genStartMessage(const QString &modelName, const QString &userName) {
     return {
         {"model", modelName.toUtf8().toStdString()},
         {"messages", {
                          {
                              {"role", "system"},
-                       {"content", "Ты полезный ассистент" + (!userName.toUtf8().toStdString().empty() ? ", а пользователя зовут: " + userName.toUtf8().toStdString() : "")}
+                       {"content", "Ты полезный ассистент, используй HTML форматирование, а не MD" + (!userName.toUtf8().toStdString().empty() ? " Имя пользователя: " + userName.toUtf8().toStdString() : "")}
                          }
                      }},
         {"temperature", 0.7},
@@ -96,7 +172,7 @@ nlohmann::json ChatixMainWindow::genStartMessage(const QString &modelName, const
     };
 }
 
-
+// Добавление чата, позволяет указать название чата (в будущем для мультиязычности)
 void ChatixMainWindow::addChatByDate(const QString &baseTitle) {
     // Создаём системный промпт для нового чата
     nlohmann::json startMsg;
@@ -117,8 +193,8 @@ void ChatixMainWindow::addChatByDate(const QString &baseTitle) {
     ui->chatList->addItem(title);
 }
 
-void ChatixMainWindow::on_sendButton_clicked()
-{
+// Обработка отправки сообщения к LLM
+void ChatixMainWindow::on_sendButton_clicked() {
     std::size_t tmpID = curChatID;
 
     // Обновляем название модели
@@ -143,7 +219,7 @@ void ChatixMainWindow::on_sendButton_clicked()
         chats[tmpID].isGenerating = true;
         if (tmpID == curChatID) {
             ui->sendButton->setEnabled(false);
-            ui->chatBox->setMarkdown(genMD(tmpID));
+            ui->chatBox->setHtml(genHTML(tmpID));
         }
         qDebug() << "Send message to LLM provider...";
         // Получаем ответ от сервера
@@ -162,7 +238,7 @@ void ChatixMainWindow::on_sendButton_clicked()
         chats[tmpID].isGenerating = false;
         if (tmpID == curChatID) {
             ui->sendButton->setEnabled(true);
-            ui->chatBox->setMarkdown(genMD(tmpID));
+            ui->chatBox->setHtml(genHTML(tmpID));
         }
     } catch (std::runtime_error &e) {
         qDebug() << e.what();
@@ -172,9 +248,8 @@ void ChatixMainWindow::on_sendButton_clicked()
 }
 
 
-
-void ChatixMainWindow::on_hideChatListButton_clicked()
-{
+// Переключение видимости списка чатов по нажатию
+void ChatixMainWindow::on_hideChatListButton_clicked() {
     bool currentlyVisible = ui->chatList->isVisible();
 
     // Переключаем видимость
@@ -187,8 +262,8 @@ void ChatixMainWindow::on_hideChatListButton_clicked()
     chatListHidedByUser = currentlyVisible;
 }
 
-void ChatixMainWindow::resizeEvent(QResizeEvent *event)
-{
+// Обработка изменения размера окна, автоматически скрывает список чатов
+void ChatixMainWindow::resizeEvent(QResizeEvent *event) {
     QMainWindow::resizeEvent(event);
 
     qDebug() << event->size().width();
@@ -209,28 +284,32 @@ void ChatixMainWindow::resizeEvent(QResizeEvent *event)
     }
 }
 
+// Создание чата и автоматическое переключение
 void ChatixMainWindow::on_newChatButton_clicked() {
     addChatByDate("Чат");
     switchToChat(chats.size() - 1);
     saveChatHistoryAndSettings();
 }
 
-
+// Переключение на чат, item - элемент списка
 void ChatixMainWindow::on_chatList_itemClicked(QListWidgetItem *item) {
     int index = ui->chatList->row(item);
     switchToChat(index);
 }
 
+// Переключение на чат по его индексу
+// index - индекс этого чата в chats[]
 void ChatixMainWindow::switchToChat(std::size_t index) {
     if (index >= 0 && index < static_cast<int>(chats.size())) {
         qDebug() << "Состояние чата " << (chats[index].isGenerating ? "генерирует" : "простаивает");
         ui->sendButton->setEnabled((!chats[index].isGenerating));
         ui->chatNameLabel->setText(ui->chatList->item(index)->text());
         curChatID = index;
-        ui->chatBox->setMarkdown(genMD(index));
+        ui->chatBox->setHtml(genHTML(index));
     }
 }
 
+// Открытие настроек
 void ChatixMainWindow::on_settingsButton_clicked() {
     // Создаём экземпляр окна и передаём данные
     settingsWindow *settings = new settingsWindow();
@@ -276,6 +355,9 @@ void ChatixMainWindow::on_settingsButton_clicked() {
     }
 }
 
+// Сохранение пользовательских данных в папку данных приложений пользователя
+// Автоматически создаёт путь
+// Возвращает результат выполнения
 bool ChatixMainWindow::saveChatHistoryAndSettings() {
     // Определяем путь к файлу
     QString configDir = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
@@ -318,6 +400,8 @@ bool ChatixMainWindow::saveChatHistoryAndSettings() {
     return true;
 }
 
+// Загрузка параметров и чатов
+// Возвращает результат загрузки
 bool ChatixMainWindow::loadChatHistoryAndSettings() {
     QString configDir = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
     QString filePath = configDir + "/chatix_data.json";
@@ -363,11 +447,6 @@ bool ChatixMainWindow::loadChatHistoryAndSettings() {
         }
     }
 
-    // Если чатов нет – создаём один
-    if (chats.empty()) {
-        addChatByDate("Чат");
-    }
-
     // Обновляем провайдера в соответствии с загруженными настройками
     try {
         switch (current_settings.provider) {
@@ -389,6 +468,7 @@ bool ChatixMainWindow::loadChatHistoryAndSettings() {
     return true;
 }
 
+// Закрытие окна с сохранением
 void ChatixMainWindow::closeEvent(QCloseEvent *event) {
     if (saveChatHistoryAndSettings()) {
         qDebug() << "Chats saved!";
@@ -397,6 +477,7 @@ void ChatixMainWindow::closeEvent(QCloseEvent *event) {
     }
 }
 
+// Отправка сообщения к LMS при нажатии на Enter
 bool ChatixMainWindow::eventFilter(QObject *obj, QEvent *event)
 {
     if (obj == ui->questionEdit && event->type() == QEvent::KeyPress) {
@@ -423,3 +504,57 @@ bool ChatixMainWindow::eventFilter(QObject *obj, QEvent *event)
 
     return QMainWindow::eventFilter(obj, event);
 }
+
+// Сохраняем всё по нажатию в меню
+void ChatixMainWindow::on_saveAction_triggered() {
+    bool saveState = saveChatHistoryAndSettings();
+    while (!saveState) {
+        auto result = QMessageBox::warning(this, "Ошибка", "Ошибка сохранения!\nПопробовать ещё раз?",
+                              QMessageBox::Yes | QMessageBox::No);
+        if (result == QMessageBox::Yes) {
+            saveState = saveChatHistoryAndSettings();
+        } else {
+            break;
+        }
+    }
+}
+
+// Очищаем историю и удаляем настройки
+void ChatixMainWindow::on_clearHistoryAction_triggered() {
+    // Получаем путь к файлу
+    QString configDir = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
+    QString filePath = configDir + "/chatix_data.json";
+
+    QFile file(filePath);
+
+    // Проверяем существование файла
+    if (!file.exists()) {
+        qDebug() << "Файл не существует:" << filePath;
+        return;
+    }
+
+    // Удаляем файл
+    if (!file.remove()) {
+        qDebug() << "Не удалось удалить файл:" << filePath;
+        return;
+    }
+
+    qDebug() << "Файл удалён:" << filePath;
+    // Очищаем чаты и добавляем пустой чат
+    chats.clear();
+    ui->chatList->clear();
+    addChatByDate("Чат");
+    switchToChat(0);
+}
+
+
+// По нажатию кнопки закрыть в меню - закрываем
+void ChatixMainWindow::on_closeAction_triggered() {
+    if (saveChatHistoryAndSettings()) {
+        qDebug() << "Chats saved!";
+    } else {
+        qDebug() << "Chats not saved(!";
+    }
+    close();
+}
+

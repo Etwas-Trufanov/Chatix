@@ -155,6 +155,9 @@ void settingsWindow::UpdateSetModelList() {    // Блокируем сигна�
     }
     // Разблокируем сигналы
     ui->modelSelector->blockSignals(false);
+    if (param.ollamaModelName == "" and (ui->modelSelector->count() > 0)) {
+        param.ollamaModelName = ui->modelSelector->itemText(0);
+    }
 }
 
 settingsWindow::settingsWindow(QWidget *parent)

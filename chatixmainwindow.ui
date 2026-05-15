@@ -188,6 +188,42 @@
     </item>
    </layout>
   </widget>
+  <widget class="QMenuBar" name="menuBar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>909</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menu">
+    <property name="title">
+     <string>Меню</string>
+    </property>
+    <addaction name="saveAction"/>
+    <addaction name="separator"/>
+    <addaction name="clearHistoryAction"/>
+    <addaction name="separator"/>
+    <addaction name="closeAction"/>
+   </widget>
+   <addaction name="menu"/>
+  </widget>
+  <action name="saveAction">
+   <property name="text">
+    <string>Сохранить чаты</string>
+   </property>
+  </action>
+  <action name="clearHistoryAction">
+   <property name="text">
+    <string>Очистить данные</string>
+   </property>
+  </action>
+  <action name="closeAction">
+   <property name="text">
+    <string>Закрыть</string>
+   </property>
+  </action>
  </widget>
  <resources/>
  <connections/>
