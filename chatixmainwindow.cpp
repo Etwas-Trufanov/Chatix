@@ -19,6 +19,7 @@ ChatixMainWindow::ChatixMainWindow(QWidget *parent) :
     ui(new Ui::ChatixMainWindow)
 {
     ui->setupUi(this);
+    ui->questionEdit->installEventFilter(this);
     qDebug() << "Первый пустой конструктор";
     current_settings = settingsData::TSettings();
 
@@ -53,8 +54,8 @@ ChatixMainWindow::ChatixMainWindow(QWidget *parent) :
     }
 
     if (!loadChatHistoryAndSettings()) {
-        qDebug() << "Нет сохранённых чатов, создаём новый";
-        addChatByDate("Чат");
+        qDebug() << "Первичный запуск, вызываем настройки";
+        on_settingsButton_clicked();
     } else {
         qDebug() << "Загружено чатов:" << chats.size();
         if (ui->chatList->count() == 0 && !chats.empty()) {
@@ -267,7 +268,7 @@ void ChatixMainWindow::on_settingsButton_clicked() {
         }
 
         // Костыль: обновляем в json текущего чата имя пользователя
-        chats[curChatID].data["messages"][0]["content"] = "Ты полезный ассистент" + (!current_settings.userName.toUtf8().toStdString().empty() ? ", а пользователя зовут: " + current_settings.userName.toUtf8().toStdString() : "");
+        if (!chats.empty()) chats[curChatID].data["messages"][0]["content"] = "Ты полезный ассистент" + (!current_settings.userName.toUtf8().toStdString().empty() ? ", а пользователя зовут: " + current_settings.userName.toUtf8().toStdString() : "");
 
         qDebug() << "config: lms model" << current_settings.lmsterModelName;
         qDebug() << "config: ollama model" << current_settings.ollamaModelName;
@@ -396,3 +397,29 @@ void ChatixMainWindow::closeEvent(QCloseEvent *event) {
     }
 }
 
+bool ChatixMainWindow::eventFilter(QObject *obj, QEvent *event)
+{
+    if (obj == ui->questionEdit && event->type() == QEvent::KeyPress) {
+        QKeyEvent *keyEvent = static_cast<QKeyEvent*>(event);
+
+        // Enter без Ctrl -> отправка
+        if ((keyEvent->key() == Qt::Key_Return ||
+             keyEvent->key() == Qt::Key_Enter) &&
+            !(keyEvent->modifiers() & Qt::ControlModifier))
+        {
+            on_sendButton_clicked();
+            return true;
+        }
+
+        // Ctrl+Enter -> перенос строки
+        if ((keyEvent->key() == Qt::Key_Return ||
+             keyEvent->key() == Qt::Key_Enter) &&
+            (keyEvent->modifiers() & Qt::ControlModifier))
+        {
+            ui->questionEdit->insertPlainText("\n");
+            return true;
+        }
+    }
+
+    return QMainWindow::eventFilter(obj, event);
+}

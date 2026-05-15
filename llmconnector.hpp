@@ -15,8 +15,8 @@ namespace lmc {
      * @brief Базовый абстрактный клиент для LLM серверов
      *
      * Требует реализации:
-     *  - call_answer()  → отправка запроса генерации
-     *  - get_models()   → получение списка моделей
+     *  - call_answer()  -> отправка запроса генерации
+     *  - get_models()   -> получение списка моделей
      */
 class LLMClient : public QObject {
     protected:

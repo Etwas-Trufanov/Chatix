@@ -62,6 +62,8 @@ private slots:
 
     void on_modelSelector_currentIndexChanged(int index);
 
+    void on_buttonBox_rejected();
+
 private:
     Ui::settingsWindow *ui;
 

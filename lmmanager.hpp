@@ -7,6 +7,10 @@
 #include <QStandardPaths>
 #include <QStringList>
 
+// Класс для управлением LLM сервера (автоматический запуск при открытии окна)
+// Пока не реализован(
+
+
 namespace lmManagers {
 
     class lmManager : public QObject {

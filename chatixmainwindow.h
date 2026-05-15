@@ -3,6 +3,7 @@
 #include <QMainWindow>
 #include <qlistwidget.h>
 #include <vector>
+#include <QKeyEvent>
 
 #include "llmconnector.hpp"
 //#include "lmmanager.hpp"
@@ -101,5 +102,7 @@ private:
     void closeEvent(QCloseEvent *event) override;
     // Переопределённый эвент изменения размера
     void resizeEvent(QResizeEvent *event) override;
+    // Переопределение эвента нажатия клавиши
+    bool eventFilter(QObject *obj, QEvent *event) override;
 };
 #endif // CHATIXMAINWINDOW_H

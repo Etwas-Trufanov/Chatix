@@ -35,6 +35,7 @@ qt_add_executable(Chatix
 
 
 
+
 )
 
 qt_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})

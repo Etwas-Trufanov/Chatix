@@ -215,3 +215,8 @@ int settingsWindow::showDialog() {
     qDebug() << "lms model" << param.lmsterModelName;
     return exec();
 }
+void settingsWindow::on_buttonBox_rejected()
+{
+    reject();
+}
+
